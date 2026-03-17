@@ -27,7 +27,15 @@ const userSchema = new mongoose.Schema({
     },
     refreshToken:{
         type:String
-    } 
+    },
+    otp:{
+        code:{
+            type:String
+        },
+        expiresAt:{
+            type:Date
+        }
+    },
 })
 
 const userModel = mongoose.model('user',userSchema)

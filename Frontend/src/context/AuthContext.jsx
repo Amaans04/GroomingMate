@@ -4,6 +4,8 @@ import { api } from "../lib/api";
 const AuthContext = createContext(null);
 
 const STORAGE_KEY = "groommate_auth_v1";
+export const RESET_IDENTIFIER_KEY = "reset_identifier";
+export const RESET_OTP_KEY = "reset_otp";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -87,6 +89,49 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const forgotPassword = useCallback(async ({ identifier }) => {
+    setIsLoading(true);
+    try{
+      const email = identifier;
+      const res = await api.post("/auth/api/forgot-password", {
+        email,
+      });
+      return {ok: true, data: res.data};
+    }finally{
+      setIsLoading(false);
+    }
+  },[])
+
+  const verifyOtp = useCallback(async({ identifier, otp })=>{
+    setIsLoading(true);
+    try{
+      const email = identifier;
+      const res = await api.post("/auth/api/verify-otp",{
+        email,
+        otp
+      });
+      return {ok:true, data:res.data};
+    }finally{
+      setIsLoading(false)
+    }
+  },[]);
+
+  const resetPassword = useCallback(async({ identifier, otp, newPassword }) => {
+    setIsLoading(true);
+    try{
+      const email = identifier;
+      const res = await api.post("/auth/api/reset-password",{
+        email,
+        otp,
+        newPassword,
+      });
+      return{ok:true, data: res.data};
+    }finally{
+      setIsAuthed(false);
+      setIsLoading(false);
+    }
+  },[])
+
   const value = useMemo(
     () => ({
       user,
@@ -96,9 +141,25 @@ export function AuthProvider({ children }) {
       login,
       register,
       logout,
+      forgotPassword,
+      verifyOtp,
+      resetPassword
     }),
-    [user, isAuthed, isLoading, isReady, login, register, logout]
+    [
+      user,
+      isAuthed,
+      isLoading,
+      isReady,
+      login,
+      register,
+      logout,
+      forgotPassword,
+      verifyOtp,
+      resetPassword,
+    ]
   );
+
+
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

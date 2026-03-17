@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export default function Login() {
-  const { login, loading } = useAuth();
+  const { login, isLoading } = useAuth();
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ identifier: "", password: "" });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -22,8 +21,8 @@ export default function Login() {
 
   const validate = () => {
     const errs = {};
-    if (!validateEmail(form.email)) errs.email = "Enter a valid email address.";
-    if (form.password.length < 6)   errs.password = "Password must be at least 6 characters.";
+    if (!form.identifier.trim()){errs.identifier = "Enter your Email or Phone Number"};
+    if (form.password.length < 6)errs.password = "Password must be at least 6 characters.";
     return errs;
   };
 
@@ -32,7 +31,13 @@ export default function Login() {
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     try {
-      await login({ email: form.email, password: form.password });
+      const identifier = form.identifier.trim();
+      const isEmail = identifier.includes("@");
+      await login({
+        email: isEmail ? identifier : undefined,
+        phone_number: !isEmail ? identifier : undefined,
+        password: form.password,
+      });
       navigate("/dashboard");
     } catch (err) {
       setServerError(err.message);
@@ -57,7 +62,7 @@ export default function Login() {
               <path d="M10 2L2 6v8l8 4 8-4V6L10 2zm0 2.4L15.6 7 10 9.6 4.4 7 10 4.4zM3.5 8.3l5.5 2.7v5.6L3.5 14V8.3zm7 8.3V11l5.5-2.7V14L10.5 16.6z" />
             </svg>
           </div>
-          <span className="text-white font-semibold text-lg tracking-tight">Groommate</span>
+          <span className="text-white font-semibold text-lg tracking-tight">GroomMate</span>
         </div>
 
         {/* card */}
@@ -76,26 +81,30 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} noValidate className="space-y-4">
 
-            {/* email */}
+            {/* email or phone number */}
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Email</label>
+              <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Email or Phone Number</label>
               <input
-                id="email" name="email" type="email"
-                autoComplete="email" placeholder="you@example.com"
-                value={form.email} onChange={handleChange}
+                id="identifier" name="identifier" type="text"
+                autoComplete="email" placeholder="Email or Phone Number"
+                value={form.identifier} onChange={handleChange}
                 className={`w-full rounded-xl border bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-colors
-                  ${errors.email
+                  ${errors.identifier
                     ? "border-red-700 focus:border-red-500"
                     : "border-slate-800 focus:border-indigo-500"}`}
               />
-              {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
+              {errors.identifier && <p className="text-xs text-red-400">{errors.identifier}</p>}
             </div>
 
             {/* password */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Password</label>
-                <button type="button" className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">
+                <button
+                  type="button"
+                  onClick={() => navigate("/forgot-password")}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
                   Forgot password?
                 </button>
               </div>
@@ -132,10 +141,10 @@ export default function Login() {
 
             {/* submit */}
             <button
-              type="submit" disabled={loading}
+              type="submit" disabled={isLoading}
               className="w-full mt-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-white transition-colors"
             >
-              {loading ? (
+              {isLoading ? (
                 <span className="flex items-center justify-center gap-2">
                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />

@@ -1,6 +1,8 @@
 import userModel from "../models/user.model.js"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
+import crypto from "crypto"
+import nodemailer from "nodemailer"
 
 function cookieOptions(maxAgeMs) {
     const isProd = process.env.NODE_ENV === "production";
@@ -180,4 +182,88 @@ async function getUser(req,res){
     }
 }
 
-export default {registerUser,loginUser,refreshToken,logoutUser,getUser}
+
+async function forgotPassword(req,res){
+    const transporter = nodemailer.createTransport({
+        service:"gmail",
+        auth:{
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    })
+    const {email} = req.body
+    try {
+        const user = await userModel.findOne({email})
+        if(!user){
+            return res.status(404).json({message:"User does not exists"})
+        }
+
+        const otp = crypto.randomInt(100000,999999).toString()
+        const otpExpirey = new Date(Date.now() + 5*60*1000)
+        user.otp.code = otp
+        user.otp.expiresAt = otpExpirey
+        await user.save()
+
+        await transporter.sendMail({
+            from: `"Groommate" <${process.env.EMAIL_USER}>`,
+            to: user.email,
+            subject: "Your Groommate OTP",
+            html: `
+              <p>Your OTP for password reset is:</p>
+              <h2 style="letter-spacing: 8px">${otp}</h2>
+              <p>This OTP expires in <strong>10 minutes</strong>.</p>
+              <p>If you didn't request this, ignore this email.</p>
+            `,
+          });
+
+          res.json({message:"OTP sent to your email"})
+    } catch (error) {
+        res.status(500).json({message:"Internal server error"})
+        console.error(error)
+    }
+}
+
+async function verifyOtp(req,res){
+    const {email,otp}=req.body;
+    try {
+        const user = await userModel.findOne({email})
+        if (!user || !user.otp.code || !user.otp.expiresAt) {
+            return res.status(400).json({ message: "Invalid or expired OTP." });
+        }
+        if (user.otp.expiresAt < Date.now()){
+            user.otp = null
+            await user.save()
+            return res.status(400).json({ message: "Invalid or expired OTP." });
+        }
+        if (user.otp.code !== otp){
+            return res.status(400).json({ message: "Invalid OTP." });
+        }
+        if (user.otp.code == otp){
+            res.json({ message: "OTP verified.", verified: true });
+        }
+    } catch (error) {
+        res.status(500).json({message:"Internal server error"})
+        console.error(error)
+    }
+}
+
+async function resetPassword(req,res){
+    const {email,otp,newPassword}=req.body;
+    try {
+        const user = await userModel.findOne({email})
+        if (!user || !user.otp.code || user.otp.code !== otp || user.otp.expiresAt < new Date()) {
+            return res.status(400).json({ message: "Invalid or expired OTP." });
+          }
+        const hash = await bcrypt.hash(newPassword,10)
+        user.password = hash
+        
+        user.otp = null
+        await user.save()
+        res.json({message:"Password reset successfully"})
+    } catch (error) {
+        res.status(500).json({message:"Internal server error"})
+        console.error(error)
+    }
+}
+
+export default {registerUser,loginUser,refreshToken,logoutUser,getUser,forgotPassword,verifyOtp,resetPassword}
