@@ -15,7 +15,12 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
-  family: 4,              // force IPv4 — fixes Render's IPv6 issue
+  // Force IPv4 on hosts where IPv6 egress is unavailable (common on Render).
+  // Nodemailer does not consistently respect `family: 4`, so we override DNS lookup.
+  lookup: (hostname, _options, cb) => dns.lookup(hostname, { family: 4 }, cb),
+  tls: {
+    servername: "smtp.gmail.com",
+  },
   connectionTimeout: 120000,
   greetingTimeout: 120000,
   socketTimeout: 120000,
