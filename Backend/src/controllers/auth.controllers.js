@@ -3,6 +3,8 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 import nodemailer from "nodemailer"
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
 
 function cookieOptions(maxAgeMs) {
     const isProd = process.env.NODE_ENV === "production";
@@ -192,6 +194,9 @@ async function forgotPassword(req,res){
           user: process.env.EMAIL_USER,
           pass: process.env.EMAIL_PASS,
         },
+        connectionTimeout: 120000, // time to establish connection
+        greetingTimeout: 120000,   // time to receive greeting
+        socketTimeout: 120000,
       });
     const {email} = req.body
     try {
