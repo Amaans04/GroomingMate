@@ -185,12 +185,14 @@ async function getUser(req,res){
 
 async function forgotPassword(req,res){
     const transporter = nodemailer.createTransport({
-        service:"gmail",
-        auth:{
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    })
+        host: "smtp.gmail.com",
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS,
+        },
+      });
     const {email} = req.body
     try {
         const user = await userModel.findOne({email})
@@ -217,9 +219,9 @@ async function forgotPassword(req,res){
           });
 
           res.json({message:"OTP sent to your email"})
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({message:"Internal server error"})
-        console.error(error)
+        console.log(err)
     }
 }
 
@@ -241,9 +243,9 @@ async function verifyOtp(req,res){
         if (user.otp.code == otp){
             res.json({ message: "OTP verified.", verified: true });
         }
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({message:"Internal server error"})
-        console.error(error)
+        console.log(err)
     }
 }
 
@@ -260,9 +262,9 @@ async function resetPassword(req,res){
         user.otp = null
         await user.save()
         res.json({message:"Password reset successfully"})
-    } catch (error) {
+    } catch (err) {
         res.status(500).json({message:"Internal server error"})
-        console.error(error)
+        console.error(err)
     }
 }
 
