@@ -3,28 +3,16 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
 import nodemailer from "nodemailer"
-import dns from "dns";
-dns.setDefaultResultOrder("ipv4first");
+import { configDotenv } from 'dotenv'
+configDotenv();
 
-// ── Transporter created once at the top (not inside the function) ──────────────
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  // Force IPv4 on hosts where IPv6 egress is unavailable (common on Render).
-  // Nodemailer does not consistently respect `family: 4`, so we override DNS lookup.
-  lookup: (hostname, _options, cb) => dns.lookup(hostname, { family: 4 }, cb),
-  tls: {
-    servername: "smtp.gmail.com",
-  },
-  connectionTimeout: 120000,
-  greetingTimeout: 120000,
-  socketTimeout: 120000,
-});
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  },);
 
 function cookieOptions(maxAgeMs) {
     const isProd = process.env.NODE_ENV === "production";
