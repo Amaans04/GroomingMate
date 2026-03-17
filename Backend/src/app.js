@@ -2,8 +2,6 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.route.js"
-import { configDotenv } from 'dotenv'
-configDotenv();
 
 const app = express();
 app.use(
@@ -14,6 +12,10 @@ app.use(
 );
 app.use(cookieParser())
 app.use(express.json())
+
+app.get("/health", (_req, res) => {
+  res.status(200).json({ ok: true });
+});
 //logging incoming requests for testing purposes
 // app.use((req, res, next) => {
 //   console.log("----- Incoming Request -----");
