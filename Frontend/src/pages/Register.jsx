@@ -77,9 +77,15 @@ export default function Register() {
 
   // ── phone validation ────────────────────────────────────────────────────────
   function handlePhoneChange(e) {
-    const val = e.target.value;
-    setPhoneNumber(val);
-    if (val && !isValidPhoneNumber(val, "IN")) {
+    const raw = e.target.value;
+    const normalized = raw
+      .replace(/[^\d+]/g, "")
+      .replace(/^\+?91/, "")
+      .replace(/\D/g, "")
+      .slice(0, 10);
+
+    setPhoneNumber(normalized);
+    if (normalized && !isValidPhoneNumber(normalized, "IN")) {
       setPhoneError("Enter a valid phone number.");
     } else {
       setPhoneError("");
@@ -166,14 +172,22 @@ export default function Register() {
             {/* phone */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Phone number</label>
-              <input
-                value={phoneNumber}
-                onChange={handlePhoneChange}
-                autoComplete="tel" required
-                placeholder="+91 98765 43210"
-                className={`w-full rounded-xl border bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-colors
-                  ${phoneError ? "border-red-700 focus:border-red-500" : "border-slate-800 focus:border-indigo-500"}`}
-              />
+              <div
+                className={`flex items-center w-full rounded-xl border bg-slate-950 overflow-hidden transition-colors
+                  ${phoneError ? "border-red-700 focus-within:border-red-500" : "border-slate-800 focus-within:border-indigo-500"}`}
+              >
+                <span className="px-3 py-2.5 text-sm text-slate-500 select-none border-r border-slate-800">
+                  +91
+                </span>
+                <input
+                  value={phoneNumber}
+                  onChange={handlePhoneChange}
+                  autoComplete="tel" required
+                  inputMode="numeric"
+                  placeholder="9876543210"
+                  className="w-full bg-transparent px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none"
+                />
+              </div>
               {phoneError && <p className="text-xs text-red-400">{phoneError}</p>}
             </div>
 
