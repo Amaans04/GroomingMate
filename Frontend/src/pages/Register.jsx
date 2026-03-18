@@ -2,10 +2,13 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getApiErrorMessage } from "../lib/api";
+import { isValidPhoneNumber } from "libphonenumber-js";
+
+const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, isLoading } = useAuth();
+  const { register, isLoading, sendEmailOtp, verifyEmailOtp } = useAuth();
 
   const [username, setUsername] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -15,9 +18,83 @@ export default function Register() {
   const [error, setError] = useState("");
   const [showPw, setShowPw] = useState(false);
 
+  // email verification states
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  // const [emailVerified, setEmailVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState("");
+  const [otpSuccess, setOtpSuccess] = useState("");
+
+  // phone validation state
+  const [phoneError, setPhoneError] = useState("");
+
+  // ── send OTP ────────────────────────────────────────────────────────────────
+  // async function handleSendOtp() {
+  //   setOtpError("");
+  //   setOtpSuccess("");
+  //   if (!validateEmail(email)) {
+  //     setOtpError("Enter a valid email first.");
+  //     return;
+  //   }
+  //   setOtpLoading(true);
+  //   try {
+  //     await sendEmailOtp({ email });
+  //     setOtpSent(true);
+  //     setOtpSuccess("OTP sent! Check your inbox.");
+  //   } catch (err) {
+  //     setOtpError(getApiErrorMessage(err));
+  //   } finally {
+  //     setOtpLoading(false);
+  //   }
+  // }
+
+  // // ── verify OTP ──────────────────────────────────────────────────────────────
+  // async function handleVerifyOtp() {
+  //   setOtpError("");
+  //   setOtpSuccess("");
+  //   if (otp.length !== 6) {
+  //     setOtpError("Enter the 6-digit OTP.");
+  //     return;
+  //   }
+  //   setOtpLoading(true);
+  //   try {
+  //     await verifyEmailOtp({ email, otp });
+  //     setEmailVerified(true);
+  //     setOtpSuccess("Email verified!");
+  //     setOtpSent(false);
+  //   } catch (err) {
+  //     setOtpError(getApiErrorMessage(err));
+  //   } finally {
+  //     setOtpLoading(false);
+  //   }
+  // }
+
+  // ── phone validation ────────────────────────────────────────────────────────
+  function handlePhoneChange(e) {
+    const val = e.target.value;
+    setPhoneNumber(val);
+    if (val && !isValidPhoneNumber(val, "IN")) {
+      setPhoneError("Enter a valid phone number.");
+    } else {
+      setPhoneError("");
+    }
+  }
+
+  // ── submit ──────────────────────────────────────────────────────────────────
   async function onSubmit(e) {
     e.preventDefault();
     setError("");
+
+    // if (!emailVerified) {
+    //   setError("Please verify your email before submitting.");
+    //   return;
+    // }
+    if (!isValidPhoneNumber(phoneNumber, "IN")) {
+      setError("Enter a valid phone number.");
+      return;
+    }
+
     try {
       await register({
         username: username.trim(),
@@ -26,7 +103,7 @@ export default function Register() {
         password,
         role,
       });
-      navigate("/dashboard", { replace: true });
+      navigate("/verify-email",{state:{email:email.trim()}});
     } catch (err) {
       setError(getApiErrorMessage(err));
     }
@@ -35,7 +112,7 @@ export default function Register() {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4 py-12">
 
-      {/* subtle glow blobs */}
+      {/* glow blobs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
         <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-indigo-700/10 blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full bg-violet-700/10 blur-[120px]" />
@@ -55,7 +132,6 @@ export default function Register() {
 
         {/* card */}
         <div className="rounded-2xl border border-slate-800 bg-slate-900/60 backdrop-blur-sm p-7">
-
           <div className="mb-6">
             <h1 className="text-xl font-semibold text-white tracking-tight">Create account</h1>
             <p className="text-slate-400 text-sm mt-1">Just the basics for now.</p>
@@ -80,23 +156,88 @@ export default function Register() {
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Phone number</label>
               <input
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={handlePhoneChange}
                 autoComplete="tel" required
                 placeholder="+91 98765 43210"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors"
+                className={`w-full rounded-xl border bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-colors
+                  ${phoneError ? "border-red-700 focus:border-red-500" : "border-slate-800 focus:border-indigo-500"}`}
               />
+              {phoneError && <p className="text-xs text-red-400">{phoneError}</p>}
             </div>
 
             {/* email */}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Email</label>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email" autoComplete="email" required
-                placeholder="you@example.com"
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors"
-              />
+
+              {/* email input + verify button */}
+              <div className="flex gap-2">
+                <input
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // setEmailVerified(false);
+                    // setOtpSent(false);
+                    // setOtp("");
+                    // setOtpError("");
+                    // setOtpSuccess("");
+                  }}
+                  type="email" autoComplete="email" required
+                  placeholder="you@example.com"
+                  // disabled={emailVerified}
+                  className={`flex-1 rounded-xl border bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none transition-colors"border-slate-800 focus:border-indigo-500"}
+                    disabled:opacity-60`}
+                />
+                {/* {!emailVerified && (
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={otpLoading || !email}
+                    className="shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-3 py-2.5 text-xs font-medium text-white transition-colors"
+                  >
+                    {otpLoading && !otpSent ? (
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                    ) : otpSent ? "Resend" : "Verify"}
+                  </button>
+                )}
+                {emailVerified && (
+                  <div className="shrink-0 flex items-center px-3 text-green-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                )} */}
+              </div>
+
+              {/* OTP input — shown after send */}
+              {/* {otpSent && !emailVerified && (
+                <div className="flex gap-2 mt-2">
+                  <input
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="Enter 6-digit OTP"
+                    maxLength={6}
+                    className="flex-1 rounded-xl border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors tracking-widest"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyOtp}
+                    disabled={otpLoading || otp.length !== 6}
+                    className="shrink-0 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-3 py-2.5 text-xs font-medium text-white transition-colors"
+                  >
+                    {otpLoading ? (
+                      <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                    ) : "Confirm"}
+                  </button>
+                </div>
+              )}
+
+ */}
             </div>
 
             {/* password */}
@@ -156,7 +297,7 @@ export default function Register() {
               </div>
             )}
 
-            {/* submit */}
+            {/* submit — disabled until email verified */}
             <button
               type="submit" disabled={isLoading}
               className="w-full mt-1 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-white transition-colors"

@@ -66,8 +66,8 @@ export function AuthProvider({ children }) {
           role,
         });
         // Backend also sets cookies on register, so treat as authenticated.
-        setUser(res.data?.user ?? null);
-        setIsAuthed(true);
+        // setUser(res.data?.user ?? null);
+        // setIsAuthed(true);
         return { ok: true, data: res.data };
       } finally {
         setIsLoading(false);
@@ -132,6 +132,28 @@ export function AuthProvider({ children }) {
     }
   },[])
 
+  const sendEmailOtp = useCallback(async({email})=>{
+    setIsLoading(true);
+    try{
+      const res = await api.post("/auth/api/resend-email-otp",{email});
+      return {ok:true, data:res.data};
+    }finally{
+      setIsLoading(false)
+    }
+  },[]);
+
+  const verifyEmailOtp = useCallback(async({email,otp}) => {
+    setIsLoading(true);
+    try{
+      const res = await api.post("/auth/api/verify-email", { email, otp });
+      setUser(res.data?.user ?? null);
+      setIsAuthed(true);
+      return {ok:true, data:res.data}
+    }finally{
+      setIsLoading(false)
+    }
+  },[])
+
   const value = useMemo(
     () => ({
       user,
@@ -143,7 +165,9 @@ export function AuthProvider({ children }) {
       logout,
       forgotPassword,
       verifyOtp,
-      resetPassword
+      resetPassword,
+      sendEmailOtp,
+      verifyEmailOtp
     }),
     [
       user,
@@ -156,11 +180,10 @@ export function AuthProvider({ children }) {
       forgotPassword,
       verifyOtp,
       resetPassword,
+      sendEmailOtp,
+      verifyEmailOtp
     ]
   );
-
-
-
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

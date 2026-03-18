@@ -13,6 +13,8 @@ router.get('/user', requireAuth, authControllers.getUser)
 router.post('/forgot-password',authControllers.forgotPassword)
 router.post('/verify-otp',authControllers.verifyOtp)
 router.post('/reset-password',authControllers.resetPassword)
+router.post('/verify-email',authControllers.verifyEmailOtp)
+router.post('/resend-email-otp',authControllers.resendEmailOtp)
 
 
 export default router
