@@ -5,6 +5,8 @@ import crypto from "crypto"
 import { Resend } from "resend";
 import { isValidPhoneNumber } from "libphonenumber-js";
 
+const resend_domain = process.env.RESEND_EMAIL_DOMAIN
+
 let resendClient;
 function getResend() {
   if (resendClient) return resendClient;
@@ -72,10 +74,50 @@ async function registerUser(req,res) {
     await user.save()
 
     await getResend().emails.send({
-        from: "Groommate <onboarding@resend.dev>",
+        from: `Groommate <onboarding@${resend_domain}>`,
         to: user.email,
         subject: "Verify your Groommate account",
-        html: `...same html from resendEmailOtp...`
+        html: `
+<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:0;background-color:#0f172a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
+      <tr>
+        <td align="center">
+          <table width="480" cellpadding="0" cellspacing="0" style="background-color:#1e293b;border-radius:16px;overflow:hidden;">
+            <tr>
+              <td style="background-color:#4f46e5;padding:32px;text-align:center;">
+                <p style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">✂️ Groommate</p>
+                <p style="margin:8px 0 0;font-size:13px;color:#c7d2fe;">Email Verification</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:36px 32px;">
+                <p style="margin:0 0 8px;font-size:15px;color:#94a3b8;">Hey <strong style="color:#e2e8f0;">${user.username}</strong>,</p>
+                <p style="margin:0 0 28px;font-size:14px;color:#64748b;line-height:1.6;">
+                  Use the OTP below to verify your email. It expires in <strong style="color:#e2e8f0;">5 minutes</strong>.
+                </p>
+                <div style="background-color:#0f172a;border:1px solid #334155;border-radius:12px;padding:28px;text-align:center;margin-bottom:28px;">
+                  <p style="margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:2px;color:#64748b;text-transform:uppercase;">Your OTP</p>
+                  <p style="margin:0;font-size:42px;font-weight:700;letter-spacing:12px;color:#ffffff;">${otp}</p>
+                </div>
+                <p style="margin:0;font-size:13px;color:#475569;line-height:1.6;">
+                  If you didn't create a Groommate account, ignore this email.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid #334155;padding:20px 32px;text-align:center;">
+                <p style="margin:0;font-size:12px;color:#475569;">© 2025 Groommate. All rights reserved.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+            `,
     })
 
     res.status(201).json({
@@ -280,7 +322,7 @@ async function forgotPassword(req, res) {
         await user.save()
 
         await getResend().emails.send({
-            from: "Groommate <onboarding@resend.dev>",
+            from: `Groommate <onboarding@${resend_domain}>`,
             to: user.email,
             subject: "Your Groommate Password Reset OTP",
             html: `
@@ -459,7 +501,7 @@ async function resendEmailOtp(req,res) {
         await user.save()
 
         await getResend().emails.send({
-            from: "Groommate <onboarding@resend.dev>",
+            from: `Groommate <onboarding@${resend_domain}>`,
             to: user.email,
             subject: "Verify your Groommate account",
             html: `
