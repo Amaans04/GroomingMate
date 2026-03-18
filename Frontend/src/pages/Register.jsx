@@ -5,6 +5,10 @@ import { getApiErrorMessage } from "../lib/api";
 import { isValidPhoneNumber } from "libphonenumber-js";
 
 const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const isStrongPassword = (password) =>
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()[\]{}\-_=+|\\:;"'<>,./~`]).{8,}$/.test(
+    password
+  );
 
 export default function Register() {
   const navigate = useNavigate();
@@ -28,6 +32,7 @@ export default function Register() {
 
   // phone validation state
   const [phoneError, setPhoneError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   // ── send OTP ────────────────────────────────────────────────────────────────
   // async function handleSendOtp() {
@@ -92,6 +97,13 @@ export default function Register() {
     // }
     if (!isValidPhoneNumber(phoneNumber, "IN")) {
       setError("Enter a valid phone number.");
+      return;
+    }
+    if (!isStrongPassword(password)) {
+      const msg =
+        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+      setPasswordError(msg);
+      setError(msg);
       return;
     }
 
@@ -246,11 +258,23 @@ export default function Register() {
               <div className="relative">
                 <input
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setPassword(val);
+                    if (!val) setPasswordError("");
+                    else if (!isStrongPassword(val)) {
+                      setPasswordError(
+                        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character."
+                      );
+                    } else {
+                      setPasswordError("");
+                    }
+                  }}
                   type={showPw ? "text" : "password"}
                   autoComplete="new-password" required
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 pr-10 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-indigo-500 transition-colors"
+                  className={`w-full rounded-xl border bg-slate-950 px-3 py-2.5 pr-10 text-sm text-slate-100 placeholder-slate-600 outline-none transition-colors
+                    ${passwordError ? "border-red-700 focus:border-red-500" : "border-slate-800 focus:border-indigo-500"}`}
                 />
                 <button
                   type="button" tabIndex={-1}
@@ -269,6 +293,7 @@ export default function Register() {
                   )}
                 </button>
               </div>
+              {passwordError && <p className="text-xs text-red-400">{passwordError}</p>}
             </div>
 
             {/* role */}

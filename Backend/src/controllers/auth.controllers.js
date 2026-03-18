@@ -18,6 +18,12 @@ function getResend() {
   return resendClient;
 }
 
+function isStrongPassword(password) {
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()[\]{}\-_=+|\\:;"'<>,./~`]).{8,}$/;
+    return strongPasswordRegex.test(password);
+  }
+
 // import nodemailer from "nodemailer"
 // const transporter = nodemailer.createTransport({
 //     service: "gmail",
@@ -51,6 +57,13 @@ async function registerUser(req,res) {
             message:"User Already Exists"
         })
     }
+    
+    if (!isStrongPassword(password)) {
+        return res.status(400).json({
+          message:
+            "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+        });
+      }
 
     const hash = await bcrypt.hash(password,10)
 
