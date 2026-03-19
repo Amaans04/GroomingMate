@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema({
     },
     phone_number:{
         type:String,
-        required:true,
-        unique:true,
+        required:null,
+        sparse: true,
         match:[/^[0-9]+$/]
     },
     email:{
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     },
     password:{
         type:String,
-        required:true,
+        required:null,
     },
     role:{
         type:String,
@@ -39,6 +39,10 @@ const userSchema = new mongoose.Schema({
     isEmailVerified:{
         type:Boolean,
         default:false
+    },
+    googleId: {
+        type: String,
+        default: null,
     }
 })
 

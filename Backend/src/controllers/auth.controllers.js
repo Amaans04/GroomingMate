@@ -63,7 +63,7 @@ async function registerUser(req,res) {
           message:
             "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
         });
-      }
+    }
 
     const hash = await bcrypt.hash(password,10)
 
@@ -192,7 +192,9 @@ async function loginUser(req,res) {
 
     if(!user.isEmailVerified){
         return res.status(401).json({
-            message:"Email not verified, please verify your email to login"
+          message: "Please verify your email first.",
+          isEmailVerified: false,
+          email: user.email  
         })
     }
 
@@ -567,4 +569,38 @@ async function resendEmailOtp(req,res) {
     }
 }
 
-export default {registerUser,loginUser,refreshToken,logoutUser,getUser,forgotPassword,verifyOtp,resetPassword,verifyEmailOtp,resendEmailOtp}
+async function googleAuthCallback(req, res) {
+  try {
+    const user = req.user;
+    if (!user) {
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+    }
+
+    const accessToken = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.cookie("accessToken", accessToken, cookieOptions(15 * 60 * 1000));
+    res.cookie(
+      "refreshToken",
+      refreshToken,
+      cookieOptions(7 * 24 * 60 * 60 * 1000)
+    );
+
+    return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+  } catch (_err) {
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=auth_failed`);
+  }
+}
+
+export default {registerUser,loginUser,refreshToken,logoutUser,getUser,forgotPassword,verifyOtp,resetPassword,verifyEmailOtp,resendEmailOtp,googleAuthCallback}

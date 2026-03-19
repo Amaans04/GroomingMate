@@ -14,17 +14,49 @@ export function AuthProvider({ children }) {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      setUser(parsed?.user ?? null);
-      setIsAuthed(Boolean(parsed?.isAuthed));
-    } catch {
-      // ignore corrupted storage
-    } finally {
-      setIsReady(true);
+    let cancelled = false;
+
+    async function bootstrap() {
+      // hydrate quickly from localStorage (optional)
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (!cancelled) {
+            setUser(parsed?.user ?? null);
+            setIsAuthed(Boolean(parsed?.isAuthed));
+          }
+        }
+      } catch {
+        // ignore corrupted storage
+      }
+
+      // always verify session with backend (covers Google OAuth redirect)
+      try {
+        const res = await api.get("/auth/api/user");
+        if (!cancelled) {
+          setUser(res.data?.user ?? null);
+          setIsAuthed(true);
+        }
+      } catch {
+        if (!cancelled) {
+          setUser(null);
+          setIsAuthed(false);
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+          } catch {
+            // ignore
+          }
+        }
+      } finally {
+        if (!cancelled) setIsReady(true);
+      }
     }
+
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {

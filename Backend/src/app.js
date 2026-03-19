@@ -2,6 +2,8 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.route.js"
+import passport from "./passport/passport.js";
+import passportBase from "passport";
 
 const app = express();
 app.use(
@@ -12,6 +14,7 @@ app.use(
 );
 app.use(cookieParser())
 app.use(express.json())
+app.use(passportBase.initialize());
 
 app.get("/health", (_req, res) => {
   res.status(200).json({ ok: true });
@@ -31,5 +34,6 @@ app.get("/health", (_req, res) => {
 // });
 
 app.use('/auth/api', authRoutes)
+
 
 export default app;
