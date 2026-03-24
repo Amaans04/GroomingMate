@@ -1,8 +1,10 @@
+//app.js
+
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.route.js"
-import passport from "./passport/passport.js";
+import faceshapeRoutes from "./routes/faceshape.route.js"
 import passportBase from "passport";
 
 const app = express();
@@ -34,6 +36,7 @@ app.get("/health", (_req, res) => {
 // });
 
 app.use('/auth/api', authRoutes)
+app.use("/faceshape/api",faceshapeRoutes)
 
 
 export default app;
