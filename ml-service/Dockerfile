@@ -1,7 +1,7 @@
 # ml-service/Dockerfile
 # Railway auto-detects this and builds it
 
-FROM python:3.11-slim
+FROM python:3.11-slim-bullseye
 
 WORKDIR /app
 
