@@ -1,7 +1,8 @@
 import axios from "axios";
 import FormData from "form-data";
 
-const ML_SERVER_URL = process.env.ML_SERVER_URL || "http://localhost:8000";
+// Ensure ML_SERVER_URL doesn't have trailing slash to avoid //predict
+const ML_SERVER_URL = (process.env.ML_SERVER_URL || "http://localhost:8000").replace(/\/$/, "");
 
 async function uploadImageandPredict (req, res) {
   try {

@@ -23,9 +23,10 @@ const upload = multer({
   },
 });
 
-
-router.post('/predict-face-shape', upload.single("image"),faceshapeContoellers.uploadImageandPredict)
-router.get('/health', faceshapeContoellers.checkHealth)
+// Both endpoints support the same handler for backward compatibility
+router.post("/predict-face-shape", upload.single("image"), faceshapeContoellers.uploadImageandPredict);
+router.post("/predict", upload.single("image"), faceshapeContoellers.uploadImageandPredict);
+router.get("/health", faceshapeContoellers.checkHealth);
 
 // POST /faceshape/api/predict
 // Auth is already verified by the middleware mounted in app.js
