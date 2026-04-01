@@ -8,7 +8,7 @@ import faceshapeContoellers from "../controllers/faceshape.contoellers.js";
 
 const router = express.Router();
 
-const ML_SERVER_URL = process.env.ML_SERVER_URL || "http://localhost:8000";
+// const ML_SERVER_URL = process.env.ML_SERVER_URL || "http://localhost:8000";
 
 // Memory storage — no disk write, forward straight to Python
 const upload = multer({

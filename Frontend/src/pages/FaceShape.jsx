@@ -27,10 +27,21 @@ async function predictFaceShape(imageFile) {
   const form = new FormData();
   form.append("image", imageFile);
 
-  const res = await api.post("/faceshape/api/predict-face-shape", form, {
+  const requestConfig = {
     headers        : { "Content-Type": "multipart/form-data" },
     withCredentials: true,
-  });
+  };
+
+  let res;
+  try {
+    res = await api.post("/faceshape/api/predict-face-shape", form, requestConfig);
+  } catch (err) {
+    if (err?.response?.status !== 404) {
+      throw err;
+    }
+    // Backward compatibility for deployments that still expose /predict.
+    res = await api.post("/faceshape/api/predict", form, requestConfig);
+  }
 
   return { ok: true, data: res.data };
 }
